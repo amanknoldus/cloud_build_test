@@ -48,7 +48,8 @@ def send_cloud_build_success_email(
         pipeline: str,
         user_email: str,
         user_email_password: str,
-        receiver_email: str
+        receiver_email: str,
+        logs_path: str
 ):
     sent_from = user_email
     to = [receiver_email]
@@ -56,6 +57,7 @@ def send_cloud_build_success_email(
     body = f'''
     This is to inform the status of cloud build of your pipeline: "{pipeline}"
     for project: "{project}" has executed successfully.
+    See Logs: {logs_path}
     '''
     email_text = """
     From: {}
