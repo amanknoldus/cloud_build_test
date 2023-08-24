@@ -20,15 +20,13 @@ def send_cloud_build_failed_email(
         user_email: str,
         user_email_password: str,
         receiver_email: str,
-        failure: str
 ):
     sent_from = user_email
     to = [receiver_email]
     subject = 'Pipeline Cloud Build Status'
     body = f'''
     This is to inform the status of cloud build of your pipeline: "{pipeline}"
-    for project: "{project}" has failed!.
-    Cause: {failure}
+    for project: "{project}" has failed!
     '''
     email_text = """
     From: {}

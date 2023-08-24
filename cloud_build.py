@@ -12,6 +12,8 @@ def upload_model(get_project_id, get_trigger_id):
 
     logging.info(f"Cloud Build Trigger Execution Status: {response.running()}")
     logging.info(f"Cloud Build Trigger Metadata: {response.metadata}")
+    trigger_details = response.metadata
+    print(trigger_details)
 
     try:
         if response.result():
@@ -19,7 +21,8 @@ def upload_model(get_project_id, get_trigger_id):
             return True
 
     except Exception as e:
-        return e
+        logging.error("Some error occurred in cloud build execution")
+        raise e
 
 
 def upload_container(project_id: str,
@@ -45,15 +48,11 @@ def upload_container(project_id: str,
                 send_cloud_build_success_email(project_id, pipeline_name, user_email, user_email_password,
                                                receiver_email)
 
-            else:
-                logging.info(trigger_status)
-                # logging.error(f"Sending Cloud Build Failure Email to: {receiver_email}")
-                # send_cloud_build_failed_email(project_id, pipeline_name, user_email, user_email_password,
-                #                               receiver_email, str(trigger_status))
-                raise RuntimeError
-
         except Exception as exc:
             logging.error("Some error occurred in upload model component!")
+            logging.error(f"Sending Cloud Build Failure Email to: {receiver_email}")
+            send_cloud_build_failed_email(project_id, pipeline_name, user_email, user_email_password,
+                                          receiver_email)
             raise exc
 
 
