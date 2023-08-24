@@ -11,18 +11,18 @@ def upload_model(get_project_id, get_trigger_id):
     response = cloud_build_client.run_build_trigger(project_id=get_project_id, trigger_id=get_trigger_id)
 
     logging.info(f"Cloud Build Trigger Execution Status: {response.running()}")
-    logging.info(f"Cloud Build Trigger Metadata: {response.metadata}")
     trigger_details = response.metadata
-    print(trigger_details)
+    build_data = trigger_details.build
+    log_path = build_data.log_url
 
     try:
         if response.result():
             logging.info("Cloud Build Successful")
-            return True
+            return True, log_path
 
-    except Exception as e:
+    except Exception as error:
         logging.error("Some error occurred in cloud build execution")
-        raise e
+        return error, log_path
 
 
 def upload_container(project_id: str,
@@ -47,12 +47,20 @@ def upload_container(project_id: str,
                 logging.error(f"Sending Cloud Build Success Email to: {receiver_email}")
                 send_cloud_build_success_email(project_id, pipeline_name, user_email, user_email_password,
                                                receiver_email)
+            else:
+                logging.error(f"Sending Cloud Build Failure Email to: {receiver_email}")
+                send_cloud_build_failed_email(project_id,
+                                              pipeline_name,
+                                              user_email,
+                                              user_email_password,
+                                              receiver_email,
+                                              str(trigger_status[0]),
+                                              str(trigger_status[1])
+                                              )
+                raise RuntimeError
 
         except Exception as exc:
             logging.error("Some error occurred in upload model component!")
-            logging.error(f"Sending Cloud Build Failure Email to: {receiver_email}")
-            send_cloud_build_failed_email(project_id, pipeline_name, user_email, user_email_password,
-                                          receiver_email)
             raise exc
 
 
