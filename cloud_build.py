@@ -17,23 +17,21 @@ def upload_model(get_project_id, get_trigger_id):
         build = response.result()
         logging.info(f"Cloud Build ID: {build}")
 
-        logs_link = f"https://console.cloud.google.com/cloud-build/builds/{build.id}?project={get_project_id}"
-
         if build.status == cloudbuild_v1.Build.Status.SUCCESS:
             logging.info("Serving Trigger Cloud Build Successful")
             return True
 
         elif build.status == cloudbuild_v1.Build.Status.FAILURE:
+            logs_link = f"https://console.cloud.google.com/cloud-build/builds/{build.id}?project={get_project_id}"
             logging.error("Serving Trigger Cloud Build Failed")
-            logging.info(f"Check Logs: {logs_link}")
-            raise RuntimeError(f"Cloud Build Failed Please Check The Status in Logs: {logs_link}")
+            return False, logs_link
 
         elif build.status == cloudbuild_v1.Build.Status.TIMEOUT:
-            logging.warning(f"Cloud build ran out of time but process might still be running, please check the build: {logs_link}")
+            logging.warning("Cloud build ran out of time but process might still be running")
 
         else:
             logging.info("Some error occurred in cloud build")
-            raise RuntimeError(f"Some unknown error has occurred in cloud build: {logs_link}")
+            raise RuntimeError("Some unknown error has occurred in cloud build")
 
 
 def upload_container(project_id: str,
@@ -52,16 +50,21 @@ def upload_container(project_id: str,
         logging.info("Component execution: upload serving container image is bypassed")
     else:
         try:
-            if upload_model(project_id, trigger_id):
+            trigger_status = upload_model(project_id, trigger_id)
+            if trigger_status is True:
                 logging.info("Cloud Build completed successfully passing to next component")
                 logging.error(f"Sending Cloud Build Success Email to: {receiver_email}")
                 send_cloud_build_success_email(project_id, pipeline_name, user_email, user_email_password,
                                                receiver_email)
+            elif trigger_status[0] is False:
+                logs_link = trigger_status[1]
+                logging.info("Cloud Build execution failed due to some error!")
+                logging.info(f"See logs for details: {logs_link}")
+                raise RuntimeError(logs_link)
 
         except Exception as exc:
             logging.error("Some error occurred in upload model component!")
             logging.error(f"Sending Cloud Build Failure Email to: {receiver_email}")
-
             send_cloud_build_failed_email(project_id, pipeline_name, user_email, user_email_password,
                                           receiver_email, str(exc))
             raise exc
