@@ -24,7 +24,7 @@ steps:
     args:
         - '-c'
         - |
-          if [ "$BRANCH_NAME" = "master" ] && [ "$BUILD_STATUS" = "FAILURE" ]; then
+          if [ "$BRANCH_NAME" = "main" ] && [ "$BUILD_STATUS" = "FAILURE" ]; then
             echo "Sending build failure notification..."
             curl -X POST \
               --url "smtp.gmail.com" \
