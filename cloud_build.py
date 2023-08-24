@@ -42,8 +42,10 @@ def upload_container(project_id: str,
     else:
         try:
             trigger_status = upload_model(project_id, trigger_id)
+            status = trigger_status[0]
+            logs = trigger_status[1]
 
-            if isinstance(trigger_status, bool) and trigger_status:
+            if isinstance(status, bool) and status:
                 logging.error(f"Sending Cloud Build Success Email to: {receiver_email}")
                 send_cloud_build_success_email(project_id, pipeline_name, user_email, user_email_password,
                                                receiver_email)
@@ -54,8 +56,7 @@ def upload_container(project_id: str,
                                               user_email,
                                               user_email_password,
                                               receiver_email,
-                                              str(trigger_status[0]),
-                                              str(trigger_status[1])
+                                              str(logs)
                                               )
                 raise RuntimeError
 
