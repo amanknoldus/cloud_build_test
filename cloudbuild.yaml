@@ -22,20 +22,22 @@ steps:
     id: 'send_notification'
     entrypoint: 'bash'
     args:
-        - '-c'
-        - |
-          if [ "$BRANCH_NAME" = "main" ] && [ "$BUILD_STATUS" = "FAILURE" ]; then
+      - '-c'
+      - |
+        if [ "$BRANCH_NAME" = "master" ]; then
+          BUILD_LOGS="$(gcloud builds log "$BUILD_ID")"
+          if [[ $BUILD_LOGS == *"ERROR"* || $BUILD_LOGS == *"FAILURE"* ]]; then
             echo "Sending build failure notification..."
             curl -X POST \
               --url "smtp.gmail.com" \
               --ssl-reqd \
               --mail-from "kubeflow35@gmail.com" \
               --mail-rcpt "aman.srivastava@knoldus.com" \
-              --user "kubeflow35@gmail.com:bodlerhhhuisjtgo" \
+              --user "kubeflow35@gmail.com.com:bodlerhhhuisjtgo" \
               --insecure \
               --upload-file <(echo -e "From: kubeflow35@gmail.com\nTo: aman.srivastava@knoldus.com\nSubject: Build Failed\n\nBuild has failed. Check the logs for more details.")
           fi
+        fi  
 
-logsBucket: "gs://llm-bucket-dolly"
 options:
-  logging: GCS_ONLY
+  logging: CLOUD_LOGGING_ONLY

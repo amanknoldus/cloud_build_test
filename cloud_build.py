@@ -47,9 +47,9 @@ def upload_container(project_id: str,
 
             else:
                 logging.info(trigger_status)
-                logging.error(f"Sending Cloud Build Failure Email to: {receiver_email}")
-                send_cloud_build_failed_email(project_id, pipeline_name, user_email, user_email_password,
-                                              receiver_email, str(trigger_status))
+                # logging.error(f"Sending Cloud Build Failure Email to: {receiver_email}")
+                # send_cloud_build_failed_email(project_id, pipeline_name, user_email, user_email_password,
+                #                               receiver_email, str(trigger_status))
                 raise RuntimeError
 
         except Exception as exc:
