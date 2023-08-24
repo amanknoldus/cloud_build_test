@@ -3,12 +3,12 @@ steps:
   # Install dependencies
   - name: 'python:3.8'
     entrypoint: pip
-    args: [ "install", "-r", "requirements.txt", "--user" ]
+    args: [ "instalal", "-r", "requirements.txt", "--user" ]
 
 
   # Build the serving container image
   - name: 'gcr.io/cloud-builders/docker'
-    args: [ 'builsd', '.', '-t', 'us-central1-docker.pkg.dev/llm-dolly/nashtech-ai-docker-registry/llm-dolly-serve-image:0.1', '-f', 'serving_container/Dockerfile' ]
+    args: [ 'build', '.', '-t', 'us-central1-docker.pkg.dev/llm-dolly/nashtech-ai-docker-registry/llm-dolly-serve-image:0.1', '-f', 'serving_container/Dockerfile' ]
     id: 'build'
 
 

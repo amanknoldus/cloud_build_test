@@ -16,22 +16,19 @@ def upload_model(get_project_id, get_trigger_id):
     if response.done:
         build = response.result()
         logging.info(f"Cloud Build ID: {build}")
+        logs_link = f"https://console.cloud.google.com/cloud-build/builds/{build.id}?project={get_project_id}"
 
         if build.status == cloudbuild_v1.Build.Status.SUCCESS:
             logging.info("Serving Trigger Cloud Build Successful")
-            return True
+            return True, logs_link
 
         elif build.status == cloudbuild_v1.Build.Status.FAILURE:
-            logs_link = f"https://console.cloud.google.com/cloud-build/builds/{build.id}?project={get_project_id}"
             logging.error("Serving Trigger Cloud Build Failed")
             return False, logs_link
 
-        elif build.status == cloudbuild_v1.Build.Status.TIMEOUT:
-            logging.warning("Cloud build ran out of time but process might still be running")
-
         else:
-            logging.info("Some error occurred in cloud build")
-            raise RuntimeError("Some unknown error has occurred in cloud build")
+            logging.error("Cloud build failed due to some error")
+            return False, logs_link
 
 
 def upload_container(project_id: str,
@@ -51,16 +48,16 @@ def upload_container(project_id: str,
     else:
         try:
             trigger_status = upload_model(project_id, trigger_id)
-            if trigger_status is True:
-                logging.info("Cloud Build completed successfully passing to next component")
+            status = trigger_status[0]
+            logs_link = trigger_status[1]
+
+            if status is True:
                 logging.error(f"Sending Cloud Build Success Email to: {receiver_email}")
                 send_cloud_build_success_email(project_id, pipeline_name, user_email, user_email_password,
                                                receiver_email)
-            elif trigger_status[0] is False:
-                logs_link = trigger_status[1]
-                logging.info("Cloud Build execution failed due to some error!")
+            elif status is False:
                 logging.info(f"See logs for details: {logs_link}")
-                raise RuntimeError(logs_link)
+                raise RuntimeError(f"Check Logs: {logs_link}")
 
         except Exception as exc:
             logging.error("Some error occurred in upload model component!")
@@ -79,4 +76,3 @@ password = "bodlerhhhuisjtgo"
 receiver = 'aman.srivastava@knoldus.com'
 
 upload_container(project, pipeline, trigger, component, email, password, receiver)
-
