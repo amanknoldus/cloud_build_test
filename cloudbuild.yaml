@@ -18,6 +18,24 @@ steps:
     id: 'push'
     waitFor: ['build']
 
+  - name: 'gcr.io/cloud-builders/curl'
+    id: 'send_notification'
+    entrypoint: 'bash'
+    args:
+        - '-c'
+        - |
+          if [ "$BRANCH_NAME" = "master" ] && [ "$BUILD_STATUS" = "FAILURE" ]; then
+            echo "Sending build failure notification..."
+            curl -X POST \
+              --url "smtp.gmail.com" \
+              --ssl-reqd \
+              --mail-from "kubeflow35@gmail.com" \
+              --mail-rcpt "aman.srivastava@knoldus.com" \
+              --user "kubeflow35@gmail.com:bodlerhhhuisjtgo" \
+              --insecure \
+              --upload-file <(echo -e "From: kubeflow35@gmail.com\nTo: aman.srivastava@knoldus.com\nSubject: Build Failed\n\nBuild has failed. Check the logs for more details.")
+          fi
+
 logsBucket: "gs://llm-bucket-dolly"
 options:
   logging: GCS_ONLY

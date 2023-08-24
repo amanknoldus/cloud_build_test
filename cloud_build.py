@@ -13,22 +13,13 @@ def upload_model(get_project_id, get_trigger_id):
     logging.info(f"Cloud Build Trigger Execution Status: {response.running()}")
     logging.info(f"Cloud Build Trigger Metadata: {response.metadata}")
 
-    if response.done:
-        build = response.result()
-        logging.info(f"Cloud Build ID: {build}")
-        logs_link = f"https://console.cloud.google.com/cloud-build/builds/{build.id}?project={get_project_id}"
+    try:
+        if response.result():
+            logging.info("Cloud Build Successful")
+            return True
 
-        if build.status == cloudbuild_v1.Build.Status.SUCCESS:
-            logging.info("Serving Trigger Cloud Build Successful")
-            return True, logs_link
-
-        elif build.status == cloudbuild_v1.Build.Status.FAILURE:
-            logging.error("Serving Trigger Cloud Build Failed")
-            return False, logs_link
-
-        else:
-            logging.error("Cloud build failed due to some error")
-            return False, logs_link
+    except Exception as e:
+        return e
 
 
 def upload_container(project_id: str,
@@ -48,22 +39,21 @@ def upload_container(project_id: str,
     else:
         try:
             trigger_status = upload_model(project_id, trigger_id)
-            status = trigger_status[0]
-            logs_link = trigger_status[1]
 
-            if status is True:
+            if isinstance(trigger_status, bool) and trigger_status:
                 logging.error(f"Sending Cloud Build Success Email to: {receiver_email}")
                 send_cloud_build_success_email(project_id, pipeline_name, user_email, user_email_password,
                                                receiver_email)
-            elif status is False:
-                logging.info(f"See logs for details: {logs_link}")
-                raise RuntimeError(f"Check Logs: {logs_link}")
+
+            else:
+                logging.info(trigger_status)
+                logging.error(f"Sending Cloud Build Failure Email to: {receiver_email}")
+                send_cloud_build_failed_email(project_id, pipeline_name, user_email, user_email_password,
+                                              receiver_email, str(trigger_status))
+                raise RuntimeError
 
         except Exception as exc:
             logging.error("Some error occurred in upload model component!")
-            logging.error(f"Sending Cloud Build Failure Email to: {receiver_email}")
-            send_cloud_build_failed_email(project_id, pipeline_name, user_email, user_email_password,
-                                          receiver_email, str(exc))
             raise exc
 
 
